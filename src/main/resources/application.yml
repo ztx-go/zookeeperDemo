@@ -1,0 +1,26 @@
+server:
+  port: 8080
+spring:
+  # jpa
+  jpa:
+    database: mysql
+    show-sql: true
+    hibernate:
+      ddl-auto: update
+      naming:
+        physical-strategy: org.springframework.boot.orm.jpa.hibernate.SpringPhysicalNamingStrategy
+    database-platform: org.hibernate.dialect.MySQL5InnoDBDialect  #不加这句则默认为myisam引擎
+
+  # datasource
+  datasource:
+    url: jdbc:mysql://127.0.0.1:3306/idea_test?serverTimezone=UTC&useSSL=false
+    username: root
+    password: 123456
+    driverClassName: com.mysql.cj.jdbc.Driver
+
+zookeeper:
+  address: 127.0.0.1:2181
+  timeout: 4000
+
+logging:
+  config: classpath:logback.xml

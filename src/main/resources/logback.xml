@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE configuration>
+<configuration debug="false">
+	<contextListener class="ch.qos.logback.classic.jul.LevelChangePropagator">
+		<resetJUL>true</resetJUL>
+	</contextListener>
+
+	<property name="log_pattern"
+		value="%date{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} %mdc - %m%n" />
+	<property name="log_base_dir" value="./logs"></property>
+
+	<appender name="FILE"
+		class="ch.qos.logback.core.rolling.RollingFileAppender">
+		<append>true</append>
+		<encoder>
+			<pattern>${log_pattern}</pattern>
+			<charset>UTF-8</charset>
+		</encoder>
+		<filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+			<level>INFO</level>
+		</filter>
+		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+			<fileNamePattern>${log_base_dir}/info_%d{yyyyMMdd}.log</fileNamePattern>
+		</rollingPolicy>
+	</appender>
+	
+	<appender name="ERROR"
+		class="ch.qos.logback.core.rolling.RollingFileAppender">
+		<filter class="ch.qos.logback.classic.filter.LevelFilter">
+			<level>ERROR</level>
+			<onMatch>ACCEPT</onMatch>  
+            <onMismatch>DENY</onMismatch>
+		</filter>
+		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+			<fileNamePattern>${log_base_dir}/error_%d{yyyyMMdd}.log</fileNamePattern>
+		</rollingPolicy>
+		<append>true</append>
+		<encoder>
+			<pattern>${log_pattern}</pattern>
+			<charset>UTF-8</charset>
+		</encoder>
+	</appender>
+
+	<appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+		<target>System.out</target>
+		<encoder>
+			<pattern>${log_pattern}</pattern>
+			<charset>UTF-8</charset>
+		</encoder>
+		<filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+			<level>INFO</level>
+		</filter>
+	</appender>
+
+	<!-- 将日志写入数据库 -->
+	<!-- <appender name="DB-CLASSIC-MYSQL-POOL" class="ch.qos.logback.classic.db.DBAppender">
+		<dbNameResolver class="com.economic.system.business.common.logappender.MyDBAppender"/>
+        <connectionSource
+            class="ch.qos.logback.core.db.DriverManagerConnectionSource">
+            <driverClass>com.mysql.jdbc.Driver</driverClass>
+            <url>jdbc:mysql://192.168.0.22:3306/economicsystem_formal?characterEncoding=UTF-8</url>
+            <user>root</user>
+            <password>1213</password>
+        </connectionSource>
+    </appender>
+	开启日志异步执行..不阻塞调用线程执行
+	<appender name="async_log" class="ch.qos.logback.classic.AsyncAppender">
+	        <discardingThreshold>0</discardingThreshold>
+	        <queueSize>10000</queueSize>
+	        <neverBlock>true</neverBlock>这里为true会再队列满时,丢失日志信息.
+	        <appender-ref ref="DB-CLASSIC-MYSQL-POOL"/>
+	    </appender>
+	    配置ServiceMethodInterceptor类使用async_log打印日志
+	<logger
+		name="com.economic.system.business.common.interceptor.ServiceMethodInterceptor"
+		level="INFO">
+		<appender-ref ref="async_log" />
+	</logger> -->
+	<root level="INFO">
+		<appender-ref ref="CONSOLE" />
+		<appender-ref ref="FILE" />
+		<appender-ref ref="ERROR" />
+	</root>
+</configuration>
