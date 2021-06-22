@@ -10,24 +10,24 @@
  */
 package com.example.zookeeperDemo.controller;
 
-import com.example.zookeeperDemo.configuration.zookeeper.WatcherApi;
 import com.example.zookeeperDemo.configuration.zookeeper.ZkApi;
 import com.example.zookeeperDemo.controller.model.ResponseCode;
 import com.example.zookeeperDemo.controller.model.ResponseModel;
 import io.swagger.annotations.ApiOperation;
-import org.apache.zookeeper.KeeperException;
-import org.apache.zookeeper.WatchedEvent;
-import org.apache.zookeeper.Watcher;
-import org.apache.zookeeper.data.Stat;
+import org.apache.curator.framework.CuratorFramework;
+import org.apache.curator.framework.recipes.locks.InterProcessSemaphoreMutex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Date;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * 〈一句话功能简述〉<br>
@@ -58,7 +58,6 @@ public class ZookeeperController extends BaseController {
 //            String value=zk.getData(path,new WatcherApi());
 //            logger.info("【执行初始化测试方法getData返回值。。。。。。。。。。。。】={}",value);
 
-
 //            zk.deleteNode(path);
 
             ResponseModel result =
@@ -87,5 +86,58 @@ public class ZookeeperController extends BaseController {
         return "delete";
     }
 
+    // 使用客户端进行分布式锁的实现
+    private final Logger log = LoggerFactory.getLogger(ZookeeperController.class);
+    @Autowired
+    private CuratorFramework curatorFramework;
+    /**
+     * 临时节点名称
+     */
+    private static final String LOCK_NAME = "/lock";
+
+    /**
+     * 库存
+     */
+    private int kz = 5;
+
+    /**
+     * zookeeper分布式锁使用demo
+     *
+     * @param id
+     * @return
+     */
+    @GetMapping("/add/{id}")
+    public String add(@PathVariable String id) {
+
+        String name = Thread.currentThread().getName();
+        log.info("线程{}->开始进入add方法", name);
+        InterProcessSemaphoreMutex mutex = new InterProcessSemaphoreMutex(curatorFramework, LOCK_NAME);
+        log.info("线程{}->开始获取🔒", name);
+        boolean acquire;
+        try {
+            acquire = mutex.acquire(6000, TimeUnit.SECONDS);
+            if (acquire) {
+                log.info("线程{}->获取🔒成功开始进行购买,剩余数量{}", name, kz);
+                if (kz == 0) {
+                    log.info("销售一空了~~~~~~~~~~~~~~~~~~~~~~~~");
+                    return "销售一空";
+                }
+                kz--;
+                Thread.sleep(1000);
+                log.info("线程{}->购买完毕", name);
+            }
+        } catch (Exception e) {
+            log.error("业务执行错误信息-->", e);
+        } finally {
+            log.info("线程{}->开始释放🔒", name);
+            try {
+                mutex.release();
+                log.info("线程{}->释放🔒成功", name);
+            } catch (Exception e) {
+                log.error("释放🔒错误信息-->", e);
+            }
+        }
+        return "SUCCESS";
+    }
 
 }
